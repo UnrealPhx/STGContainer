@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "WebSockets/Public/WebSocketsModule.h"
 #include "IWebSocket.h"
+#include "Runtime/Core/Public/Containers/Queue.h"
 #include "STGContainerGameModeBase.generated.h"
 
 /**
@@ -17,10 +18,18 @@ class STGCONTAINER_API ASTGContainerGameModeBase : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+	ASTGContainerGameModeBase();
+
 	virtual void StartPlay() override;
 
 	virtual void BeginDestroy() override;
 
+	virtual void Tick(float DeltaSeconds) override;
+
 protected:
 	TSharedPtr<IWebSocket> WebSocket;
+
+	TQueue<FString> InWebSocketMessageQueue;
+	TQueue<FString> OutWebSocketMessageQueue;
+	bool bAwaitingMessageReply;
 };

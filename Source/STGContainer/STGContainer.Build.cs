@@ -16,7 +16,9 @@ public class STGContainer : ModuleRules
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
-            "WebSockets"
+            "WebSockets",
+            "Json",
+            "JsonUtilities"
         });
 
 		// Uncomment if you are using Slate UI
