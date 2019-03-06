@@ -15,26 +15,28 @@ void ASTGContainerGameModeBase::StartPlay()
 {
 	Super::StartPlay();
 
+
+	//if (FParse::Value(FCommandLine::Get(), *key, s)) {
+
 	auto* WebSocketModule = FModuleManager::LoadModulePtr< FWebSocketsModule>("WebSockets");
 	WebSocket = WebSocketModule->CreateWebSocket("ws://127.0.0.1:7379/.json");
 	
-	WebSocket->OnConnected().AddLambda([]() {
+	WebSocket->OnConnected().AddLambda([this]() {
 		UE_LOG(LogTemp, Display, TEXT("WebSocket: Connected"));
+		bWantsReconnect = false;
 	});
 
-	WebSocket->OnMessage().AddLambda([&](FString Message) {
+	WebSocket->OnConnectionError().AddLambda([this](FString Error) {
+		UE_LOG(LogTemp, Display, TEXT("WebSocket: %s"), *Error);
+		bWantsReconnect = true;
+	});
+
+	WebSocket->OnMessage().AddLambda([this](FString Message) {
 		UE_LOG(LogTemp, Display, TEXT("WebSocket: %s"), *Message);
-		InWebSocketMessageQueue.Enqueue(Message);
-		bAwaitingMessageReply = false;
+		ServerMessages.Enqueue(Message);
 	});
 
 	WebSocket->Connect();
-
-	// Test Set Value
-	OutWebSocketMessageQueue.Enqueue(R"(["SET", "hello", "unreal"])");
-
-	// Test Get Value
-	OutWebSocketMessageQueue.Enqueue(R"(["GET", "hello"])");
 }
 
 void ASTGContainerGameModeBase::BeginDestroy()
@@ -51,24 +53,48 @@ void ASTGContainerGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	FString Message;
-	if (!InWebSocketMessageQueue.IsEmpty())
+	// TODO: Throttle this reconection attempt
+	if (bWantsReconnect && !WebSocket->IsConnected())
 	{
-		InWebSocketMessageQueue.Dequeue(Message);
+		WebSocket->Connect();
+	}
 
-		TSharedPtr<FJsonValue> JsonObject;
+	const int32 MAX_MESSAGE_PARSE = 32;
+	int32 MessagesParsed = 0;
+	FString Message;
+	while (!ServerMessages.IsEmpty() && MessagesParsed < MAX_MESSAGE_PARSE)
+	{
+		ServerMessages.Dequeue(Message);
+		MessagesParsed++;
+
+		TSharedPtr<FJsonObject> JsonObject;
 		auto const& JsonReader = TJsonReaderFactory<>::Create(Message);
 		if (FJsonSerializer::Deserialize(JsonReader, JsonObject) && JsonObject.IsValid())
 		{
-			//JsonObject->
-		}
-	}
+			bool WellFormed = true;
 
-	if (!OutWebSocketMessageQueue.IsEmpty() && !bAwaitingMessageReply)
-	{
-		FString Message;
-		OutWebSocketMessageQueue.Dequeue(Message);
-		WebSocket->Send(Message);
-		bAwaitingMessageReply = true;
+			int32 Version = 1;
+			WellFormed &= JsonObject->TryGetNumberField("version", Version);
+
+			FString Type;
+			WellFormed &= JsonObject->TryGetStringField("type", Type);
+
+			if (!WellFormed) continue;
+
+			if (Type.Compare("spawn") == 0)
+			{
+				const TSharedPtr<FJsonObject>* Payload;
+				WellFormed &= JsonObject->TryGetObjectField("message", Payload);
+				if (!WellFormed) continue;
+
+				FString ActorName;
+				WellFormed &= (*Payload)->TryGetStringField("id", ActorName);
+				if (!WellFormed) continue;
+				
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+				GetWorld()->SpawnActor<AActor>(AsteroidClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+			}
+		}
 	}
 }

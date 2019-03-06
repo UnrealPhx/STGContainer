@@ -9,9 +9,6 @@
 #include "Runtime/Core/Public/Containers/Queue.h"
 #include "STGContainerGameModeBase.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class STGCONTAINER_API ASTGContainerGameModeBase : public AGameModeBase
 {
@@ -26,10 +23,13 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<AActor> AsteroidClass;
+
 protected:
 	TSharedPtr<IWebSocket> WebSocket;
+	bool bWantsReconnect;
 
-	TQueue<FString> InWebSocketMessageQueue;
-	TQueue<FString> OutWebSocketMessageQueue;
-	bool bAwaitingMessageReply;
+	TQueue<FString> ServerMessages;
 };
