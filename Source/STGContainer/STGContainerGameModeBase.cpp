@@ -15,23 +15,26 @@ void ASTGContainerGameModeBase::StartPlay()
 {
 	Super::StartPlay();
 
-
-	//if (FParse::Value(FCommandLine::Get(), *key, s)) {
-
 	auto* WebSocketModule = FModuleManager::LoadModulePtr< FWebSocketsModule>("WebSockets");
 	WebSocket = WebSocketModule->CreateWebSocket("ws://127.0.0.1:7379/.json");
 	
-	WebSocket->OnConnected().AddLambda([this]() {
+	WebSocket->OnConnected().AddLambda([this, ref = FWeakObjectPtr(this)]() {
+		if (!ref.IsValid()) return;
+
 		UE_LOG(LogTemp, Display, TEXT("WebSocket: Connected"));
 		bWantsReconnect = false;
 	});
 
-	WebSocket->OnConnectionError().AddLambda([this](FString Error) {
+	WebSocket->OnConnectionError().AddLambda([this, ref = FWeakObjectPtr(this)](FString Error) {
+		if (!ref.IsValid()) return;
+
 		UE_LOG(LogTemp, Display, TEXT("WebSocket: %s"), *Error);
 		bWantsReconnect = true;
 	});
 
-	WebSocket->OnMessage().AddLambda([this](FString Message) {
+	WebSocket->OnMessage().AddLambda([this, ref = FWeakObjectPtr(this)](FString Message) {
+		if (!ref.IsValid()) return;
+
 		UE_LOG(LogTemp, Display, TEXT("WebSocket: %s"), *Message);
 		ServerMessages.Enqueue(Message);
 	});
@@ -45,6 +48,11 @@ void ASTGContainerGameModeBase::BeginDestroy()
 
 	if (WebSocket.IsValid())
 	{
+		WebSocket->OnClosed().Clear();
+		WebSocket->OnConnected().Clear();
+		WebSocket->OnConnectionError().Clear();
+		WebSocket->OnMessage().Clear();
+		WebSocket->OnRawMessage().Clear();
 		WebSocket->Close();
 	}
 }
