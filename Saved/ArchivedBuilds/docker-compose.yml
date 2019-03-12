@@ -1,0 +1,18 @@
+version: '3'
+services:
+  server:
+    build: .
+    command: ["Default", "-log", "-ws=web:7379"]
+    ports:
+      - "7777:7777/udp"
+      - "15000:15000/udp"
+      - "7787:7787/udp"
+    depends_on:
+      - web
+      - redis
+  web:
+    image: stg-server
+    ports:
+      - "7379:7379"
+  redis:
+    image: redis

@@ -10,11 +10,11 @@ COPY --chown=ue4:ue4 ./LinuxServer ./LinuxServer
 
 RUN chmod a+x /home/ue4/LinuxServer/STGContainer/Binaries/Linux/*
 
-VOLUME ["/home/ue4/LinuxServer/STGContainer/Saved/Config/LinuxServer"]
+VOLUME ["/home/ue4/LinuxServer/STGContainer/Saved/Config"]
 VOLUME ["/home/ue4/LinuxServer/STGContainer/Saved/Logs"]
 
-ENTRYPOINT ["/home/ue4/LinuxServer/STGContainer/Binaries/Linux/STGContainerServer-Linux-Shipping"]
+ENTRYPOINT ["/home/ue4/LinuxServer/STGContainerServer.sh"]
 
-CMD ["STGContainer", "Default", "-log"]
+CMD ["Default", "-log"]
 
 EXPOSE 7777/udp 15000/udp 7787/udp
