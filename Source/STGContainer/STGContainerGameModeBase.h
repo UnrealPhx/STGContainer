@@ -32,4 +32,7 @@ protected:
 	bool bWantsReconnect;
 
 	TQueue<FString> ServerMessages;
+
+	FString ServerName;
+	FString ServerPort;
 };

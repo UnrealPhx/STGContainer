@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "STGContainerGameModeBase.h"
+#include "Misc/CommandLine.h"
 #include "Runtime/Json/Public/Dom/JsonObject.h"
 #include "Runtime/Json/Public/Serialization/JsonReader.h"
 #include "Runtime/Json/Public/Serialization/JsonSerializer.h"
@@ -15,8 +16,14 @@ void ASTGContainerGameModeBase::StartPlay()
 {
 	Super::StartPlay();
 
-	auto* WebSocketModule = FModuleManager::LoadModulePtr< FWebSocketsModule>("WebSockets");
-	WebSocket = WebSocketModule->CreateWebSocket("ws://127.0.0.1:7379/");
+	FString WebsocketAddress = "127.0.0.1:7379";
+	if (FParse::Value(FCommandLine::Get(), TEXT("ws"), WebsocketAddress)) {
+		WebsocketAddress = WebsocketAddress.Replace(TEXT("="), TEXT("")).Replace(TEXT("\""), TEXT(""));
+	}
+	WebsocketAddress.Split(":", &ServerName, &ServerPort);
+
+	auto* WebSocketModule = FModuleManager::LoadModulePtr<FWebSocketsModule>("WebSockets");
+	WebSocket = WebSocketModule->CreateWebSocket(FString::Printf(TEXT("ws://%s"), *WebsocketAddress));
 	
 	WebSocket->OnConnected().AddLambda([this, ref = FWeakObjectPtr(this)]() {
 		if (!ref.IsValid()) return;
@@ -117,7 +124,7 @@ void ASTGContainerGameModeBase::Tick(float DeltaSeconds)
 				}
 				else
 				{
-					GetWorld()->GetFirstPlayerController()->ClientTravel(ServerIp, ETravelType::TRAVEL_Absolute);
+					GetWorld()->GetFirstPlayerController()->ClientTravel(ServerName, ETravelType::TRAVEL_Absolute);
 				}
 			}
 
