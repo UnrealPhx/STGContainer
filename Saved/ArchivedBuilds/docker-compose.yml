@@ -11,7 +11,7 @@ services:
       - web
       - redis
   web:
-    image: stg-server
+    image: unrealphx/stg-server
     ports:
       - "7379:7379"
   redis:

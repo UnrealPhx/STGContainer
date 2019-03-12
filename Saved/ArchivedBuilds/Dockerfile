@@ -8,8 +8,6 @@ WORKDIR /home/ue4
 
 COPY --chown=ue4:ue4 ./LinuxServer ./LinuxServer
 
-RUN chmod a+x /home/ue4/LinuxServer/STGContainer/Binaries/Linux/*
-
 VOLUME ["/home/ue4/LinuxServer/STGContainer/Saved/Config"]
 VOLUME ["/home/ue4/LinuxServer/STGContainer/Saved/Logs"]
 
