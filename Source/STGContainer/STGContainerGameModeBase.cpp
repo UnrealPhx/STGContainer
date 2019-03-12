@@ -16,22 +16,12 @@ void ASTGContainerGameModeBase::StartPlay()
 	Super::StartPlay();
 
 	auto* WebSocketModule = FModuleManager::LoadModulePtr< FWebSocketsModule>("WebSockets");
-	WebSocket = WebSocketModule->CreateWebSocket("ws://127.0.0.1:7379/");
+	WebSocket = WebSocketModule->CreateWebSocket("ws://127.0.0.1:7379/.json");
 	
 	WebSocket->OnConnected().AddLambda([this, ref = FWeakObjectPtr(this)]() {
 		if (!ref.IsValid()) return;
 
 		UE_LOG(LogTemp, Display, TEXT("WebSocket: Connected"));
-
-		auto NetMode = GetNetMode();
-		if (NetMode == ENetMode::NM_ListenServer || NetMode == ENetMode::NM_DedicatedServer)
-		{
-			WebSocket->Send(R"({ "version": 1, "type": "status", "message": { "status": "online" }})");
-		}
-		else if (NetMode == ENetMode::NM_Standalone)
-		{
-			WebSocket->Send(R"({ "version": 1, "type": "lookup", "message": { "query": "server" }})");
-		}
 		bWantsReconnect = false;
 	});
 
@@ -58,8 +48,6 @@ void ASTGContainerGameModeBase::BeginDestroy()
 
 	if (WebSocket.IsValid())
 	{
-		WebSocket->Send(R"({ "version": 1, "type": "status", "message": { "status": "offline" }})");
-
 		WebSocket->OnClosed().Clear();
 		WebSocket->OnConnected().Clear();
 		WebSocket->OnConnectionError().Clear();
@@ -100,26 +88,6 @@ void ASTGContainerGameModeBase::Tick(float DeltaSeconds)
 			WellFormed &= JsonObject->TryGetStringField("type", Type);
 
 			if (!WellFormed) continue;
-
-			if (Type.Compare("lookup") == 0)
-			{
-				const TSharedPtr<FJsonObject>* Payload;
-				WellFormed &= JsonObject->TryGetObjectField("message", Payload);
-				if (!WellFormed) continue;
-
-				FString ServerIp;
-				WellFormed &= (*Payload)->TryGetStringField("ip", ServerIp);
-				if (!WellFormed) continue;
-
-				if (ServerIp.IsEmpty())
-				{
-					GetWorld()->ServerTravel(TEXT("Default?listen"));
-				}
-				else
-				{
-					GetWorld()->GetFirstPlayerController()->ClientTravel(ServerIp, ETravelType::TRAVEL_Absolute);
-				}
-			}
 
 			if (Type.Compare("spawn") == 0)
 			{
