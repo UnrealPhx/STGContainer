@@ -1,13 +1,16 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.21",
+	"EngineAssociation": "{384A44AD-41B6-C4A8-5D14-ACBCD67A3DC0}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
 		{
 			"Name": "STGContainer",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
 		}
 	]
 }

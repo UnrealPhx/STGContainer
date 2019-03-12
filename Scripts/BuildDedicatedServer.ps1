@@ -14,4 +14,6 @@ else {
 $uat = $engine_path + '\Engine\Build\BatchFiles\RunUAT.bat'
 
 $archive_dir = $script_path + '\..\Saved\ArchivedBuilds'
-Invoke-Expression "$uat BuildCookRun -project='$project' -platform=Win64 -clientconfig=Development -noclient -server -serverplatform=Linux -serverconfig=Shipping -cook -allmaps -build -stage -pak -archive -archivedirectory='$archive_dir'"
+Invoke-Expression "$uat BuildCookRun -project='$project' -platform=Win64 -clientconfig=Development -noclient -server -serverplatform=Win64 -serverconfig=Development -cook -allmaps -build -stage -pak -archive -archivedirectory='$archive_dir'"
+Invoke-Expression "$uat BuildCookRun -project='$project' -platform=Win64 -clientconfig=Development -noclient -server -serverplatform=Linux -serverconfig=Development -cook -allmaps -build -stage -pak -archive -archivedirectory='$archive_dir'"
+
