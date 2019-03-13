@@ -23,6 +23,9 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	UFUNCTION(BlueprintCallable, Category = "WebSocket")
+	void SendPlayerEvent(FString Event, FString Id, FString Value);
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<AActor> AsteroidClass;

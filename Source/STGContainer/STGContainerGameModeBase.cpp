@@ -12,6 +12,14 @@ ASTGContainerGameModeBase::ASTGContainerGameModeBase()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void ASTGContainerGameModeBase::SendPlayerEvent(FString Event, FString Id, FString Value)
+{
+	if (WebSocket.IsValid())
+	{
+		WebSocket->Send(FString::Printf(TEXT(R"({ "version": 1, "type": "player", "message": { "event": "%s", "id": "%s", "value": "%s" }})"), *Event, *Id, *Value));
+	}
+}
+
 void ASTGContainerGameModeBase::StartPlay()
 {
 	Super::StartPlay();
